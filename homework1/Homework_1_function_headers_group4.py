@@ -66,21 +66,26 @@ def guided_modes_2D(prm, k0, h, numb):
     """
 
     (m, n) = prm.shape
-    count = np.sum(np.ones_like(prm)).astype('int')
-    prm_flat = np.reshape(prm, (1, count))
+    count = m * n
+    prm_flat = prm.flatten()
+    ex = np.ones(count) / h ** 2
+    val_main = -4 * ex + k0 ** 2 * prm_flat
+    data = np.array([ex, ex, val_main, ex, ex])
+    offsets = np.array([-n, -1, 0, 1, n])
+    M = sps.dia_array((data, offsets), shape=(count, count))
 
-    M_laplace = np.diag(-4 * np.ones(count))
-    idx = np.linspace(0, count-1, count).astype('int')
-    idx_left = (idx[1:], idx[1:] - 1)
-    idx_right = (idx[:-1], idx[:-1] + 1)
-    idx_up = (idx[: -n], idx[:-n] + n)
-    idx_down = (idx[n:], idx[n:] - n)
-    M_laplace[idx_left] = 1
-    M_laplace[idx_right] = 1
-    M_laplace[idx_up] = 1
-    M_laplace[idx_down] = 1
-    M_laplace /= 1 / h**2
-    M = M_laplace + np.diag(k0**2 * prm_flat)
+    # M_laplace = np.diag(-4 * np.ones(count))
+    # idx = np.linspace(0, count-1, count).astype('int')
+    # idx_left = (idx[1:], idx[1:] - 1)
+    # idx_right = (idx[:-1], idx[:-1] + 1)
+    # idx_up = (idx[: -n], idx[:-n] + n)
+    # idx_down = (idx[n:], idx[n:] - n)
+    # M_laplace[idx_left] = 1
+    # M_laplace[idx_right] = 1
+    # M_laplace[idx_up] = 1
+    # M_laplace[idx_down] = 1
+    # M_laplace /= h**2
+    # M = M_laplace + np.diag(k0**2 * prm_flat)
 
     eff_eps, guided = eigs(M, numb)
 
