@@ -29,13 +29,18 @@ def guided_modes_1DTE(prm, k0, h):
     """
 
     diag = -2 / h ** 2 + k0 ** 2 * prm
-    M = np.diag(diag)
-    idx = np.linspace(0, len(prm) - 1, len(prm)).astype('int')
-    idx_right = (idx[:-1], idx[:-1] + 1)
-    idx_left = (idx[1:], idx[1:] - 1)
-    M[idx_left] = 1 / h ** 2
-    M[idx_right] = 1 / h ** 2
-    M *= 1 / k0**2
+    # M = np.diag(diag)
+    # idx = np.linspace(0, len(prm) - 1, len(prm)).astype('int')
+    # idx_right = (idx[:-1], idx[:-1] + 1)
+    # idx_left = (idx[1:], idx[1:] - 1)
+    # M[idx_left] = 1 / h ** 2
+    # M[idx_right] = 1 / h ** 2
+
+    main = np.diag(diag)
+    left = np.diag(np.ones(len(prm) - 1), -1) / h**2
+    right = np.diag(np.ones(len(prm) - 1), 1) / h**2
+    M = left + main + right
+    M /= k0**2
 
     eff_eps, guided = np.linalg.eig(M)
 
@@ -70,7 +75,7 @@ def guided_modes_2D(prm, k0, h, numb):
     prm_flat = prm.flatten()
     ex = np.ones(count) / h ** 2
     val_main = -4 * ex + k0 ** 2 * prm_flat
-    data = np.array([ex, ex, val_main, ex, ex])
+    data = np.array([ex, ex, val_main, ex, ex]) / k0**2
     offsets = np.array([-n, -1, 0, 1, n])
     M = sps.dia_array((data, offsets), shape=(count, count))
 
