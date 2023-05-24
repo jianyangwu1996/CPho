@@ -41,6 +41,7 @@ def guided_modes_1DTE_wu(prm, k0, h):
     right = np.diag(np.ones(len(prm) - 1), 1) / h**2
     M = left + main + right
     M /= k0**2
+    M = np.around(M, 6)
 
     eff_eps, guided = np.linalg.eig(M)
 
@@ -74,9 +75,14 @@ def guided_modes_1DTE_gao(prm, k0, h):
     main = -2.0 * np.ones(len(prm)) / (h**2 * k0**2) + prm
     sec = np.ones(len(prm) - 1) / (h**2 * k0**2)
     L = np.diag(sec, -1) + np.diag(main, 0) + np.diag(sec, 1)
+    L = np.around(L, 6)
 
     # solve eigenvalue problem
     eff_eps, guided = np.linalg.eig(L)
+
+    idx = np.argsort(-eff_eps)
+    eff_eps = eff_eps[idx]
+    guided = guided[:, idx]
 
     return eff_eps, guided
 
@@ -111,24 +117,11 @@ def guided_modes_2D_wu(prm, k0, h, numb):
     val_main = -4 * ex + k0 ** 2 * prm_flat
     data = np.array([ex, ex, val_main, ex, ex]) / k0**2
     offsets = np.array([-n, -1, 0, 1, n])
-    M = sps.dia_array((data, offsets), shape=(count, count))
+    M = sps.dia_array((data, offsets), shape=(count, count)).tocsc()
 
-    # M_laplace = np.diag(-4 * np.ones(count))
-    # idx = np.linspace(0, count-1, count).astype('int')
-    # idx_left = (idx[1:], idx[1:] - 1)
-    # idx_right = (idx[:-1], idx[:-1] + 1)
-    # idx_up = (idx[: -n], idx[:-n] + n)
-    # idx_down = (idx[n:], idx[n:] - n)
-    # M_laplace[idx_left] = 1
-    # M_laplace[idx_right] = 1
-    # M_laplace[idx_up] = 1
-    # M_laplace[idx_down] = 1
-    # M_laplace /= h**2
-    # M = M_laplace + np.diag(k0**2 * prm_flat)
+    eff_eps, guided = eigs(M, k=numb, which='LM')
 
-    eff_eps, guided = eigs(M, numb)
-
-    guided = np.reshape(guided.T, (m, n, numb))
+    guided = np.reshape(guided, (m, n, numb))
 
     return eff_eps, guided
 
