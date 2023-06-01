@@ -1,8 +1,10 @@
-'''Homework 2, Computational Photonics, SS 2020:  Beam propagation method.
 '''
+Homework 2, Computational Photonics, SS 2020:  Beam propagation method.
+'''
+
 import numpy as np
 import scipy.sparse as sps
-import scipy.sparse.linalg
+from scipy.sparse.linalg import spsolve
 
 
 def waveguide(xa, xb, Nx, n_cladding, n_core):
@@ -32,10 +34,13 @@ def waveguide(xa, xb, Nx, n_cladding, n_core):
         x : 1d-array
             Generated coordinate vector
     '''
-    
-    pass
 
+    x = np.linspace(-xa // 2, xa // 2, Nx)
+    n = np.ones(len(x)) * n_cladding
+    idx_core = ((x <= xb // 2) & (x >= -xb // 2))
+    n[idx_core] = n_core
 
+    return n, x
 
 
 def gauss(xa, Nx, w):
@@ -59,12 +64,14 @@ def gauss(xa, Nx, w):
         x : 1d-array
             Generated coordinate vector
     '''
-    pass
+
+    x = np.linspace(-xa // 2, xa // 2, Nx)
+    v = np.exp(-x ** 2 / w ** 2)
+
+    return v, x
 
 
-
-
-def beamprop_CN(v_in, lam, dx, n, nd,  z_end, dz, output_step):
+def beamprop_CN(v_in, lam, dx, n, nd, z_end, dz, output_step):
     '''Propagates an initial field over a given distance based on the
     solution of the paraxial wave equation in an inhomogeneous
     refractive index distribution using the explicit-implicit
@@ -96,5 +103,26 @@ def beamprop_CN(v_in, lam, dx, n, nd,  z_end, dz, output_step):
         z : 1d-array
             z-coordinates of field output
     '''
-    pass
 
+    dz = dz * output_step
+    z = np.arange(0, z_end + 1e-6, dz)
+
+    N = len(v_in)
+    k = 2 * np.pi / lam * n
+    k_mean = 2 * np.pi / lam * nd
+    W = (k ** 2 - k_mean ** 2) / (2 * k_mean)
+    sec = 1j / (2 * k_mean * dx ** 2) * np.ones(N)
+    main = -2 * sec + 1j * W
+    data = np.array([sec, main, sec])
+    offsets = np.array([-1, 0, 1])
+    L = sps.dia_array((data, offsets), shape=(N, N)).tocsc()
+    I = sps.eye(N)
+    A = I - 0.5 * dz * L
+    B = I + 0.5 * dz * L
+
+    v = np.zeros((N, len(z)+1)).astype('complex')
+    v[:, 0] = v_in
+    for i in range(1, len(z) + 1):
+        v[:, i] = spsolve(A, B @ v[:, i - 1])
+
+    return v, z
