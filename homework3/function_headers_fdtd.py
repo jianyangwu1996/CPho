@@ -1,4 +1,5 @@
-py'''Homework 3, Computational Photonics, SS 2023:  FDTD method.
+'''
+Homework 3, Computational Photonics, SS 2023:  FDTD method.
 '''
 
 import numpy as np
@@ -9,7 +10,7 @@ import time
 
 def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
             source_pulse_length):
-    '''Computes the temporal evolution of a pulsed excitation using the
+    """Computes the temporal evolution of a pulsed excitation using the
     1D FDTD method. The temporal center of the pulse is placed at a
     simulation time of 3*source_pulse_length. The origin x=0 is in the
     center of the computational domain. All quantities have to be
@@ -40,8 +41,40 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
             Spatial coordinates of the field output
         t  : 1d-array
             Time of the field output
-    '''
-    pass
+    """
+    c = 2.99792458e8
+    mu0 = 4 * np.pi * 1e-7
+    eps0 = 1 / (mu0 * c ** 2)
+
+    lam = c/source_frequency
+    if dx > lam/20:
+        dx = lam/20
+    else:
+        pass
+
+    Nx = len(eps_rel)
+    x = np.linspace(-(Nx-1)*dx/2, (Nx-1)*dx, Nx)
+    dt = dx / 2 / c
+    t = np.arange(0, time_span, dt)
+    Nt = len(t)
+
+    t0 = 3 * source_pulse_length
+    j0 = 1
+    carrier = np.exp(-2j * np.pi * source_frequency * (t-t0+0.5*dt))
+    A = np.exp(-(t+0.5*dt - t0)**2 / source_pulse_length**2)
+    jz = A * carrier * j0
+
+    Ez = np.zeros((Nt, Nx)).astype('complex')
+    Hy = np.zeros((Nt, Nx-1)).astype('complex')
+    ind = int(round((source_position - x[0]) / dx))
+
+    for n in range(1, Nt):
+        Ez[n, 1:-1] = Ez[n-1, 1:-1] + 1/eps0/eps_rel[1:-1] * dt/dx * (Hy[n-1, 1:] - Hy[n-1, :-1])
+        Ez[n, ind] -= dt/eps0/eps_rel[ind] * jz[n]
+
+        Hy[n, :] = Hy[n-1, :] + 1/mu0 * dt/dx * (Ez[n, 1:] - Ez[n, :-1])
+
+    return Ez, Hy, x, t
 
 
 def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
@@ -127,9 +160,9 @@ class Fdtd1DAnimation(animation.TimedAnimation):
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         vmax = max(np.max(np.abs(Ez)),np.max(np.abs(Hy))*Z0)*1e6
         fig, ax = plt.subplots(2,1, sharex=True, gridspec_kw={'hspace': 0.4})
-        self.line_E, = ax[0].plot(x*1e6, self.E_at_step(0),
+        self.line_E, = ax[0].plot(self.E_at_step(0),
                          color=colors[0], label='$\\Re\\{E_z\\}$')
-        self.line_H, = ax[1].plot(x*1e6, self.H_at_step(0),
+        self.line_H, = ax[1].plot(self.H_at_step(0),
                          color=colors[1], label='$Z_0\\Re\\{H_y\\}$')
         if x_interface is not None:
             for a in ax:

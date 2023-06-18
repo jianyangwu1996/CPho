@@ -46,8 +46,10 @@ source_position = 0 # [m]
 source_pulse_length = 1e-15 # [s]
 
 # %% create permittivity distribution and run simulation %%%%%%%%%%%%%%%%%%%%%%
+esp = np.ones(Nx)
 
 # please add your code here
+Ez, Hy, x, t = fdtd_1d(esp, dx, time_span, source_frequency, source_position, source_pulse_length)
 
 # %% make video %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fps = 25
@@ -55,6 +57,7 @@ step = t[-1]/fps/30
 ani = Fdtd1DAnimation(x, t, Ez, Hy, x_interface=x_interface,
                        step=step, fps=fps)
 plt.show()
+ani.save("My animation.gif")
 
 # %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
