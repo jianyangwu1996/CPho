@@ -53,7 +53,7 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
         pass
 
     Nx = len(eps_rel)
-    x = np.linspace(-(Nx-1)*dx/2, (Nx-1)*dx, Nx)
+    x = np.linspace(-(Nx-1)*dx/2, (Nx-1)*dx/2, Nx)
     dt = dx / 2 / c
     t = np.arange(0, time_span, dt)
     Nt = len(t)
@@ -73,6 +73,11 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
         Ez[n, ind] -= dt/eps0/eps_rel[ind] * jz[n]
 
         Hy[n, :] = Hy[n-1, :] + 1/mu0 * dt/dx * (Ez[n, 1:] - Ez[n, :-1])
+
+    # interpolate Hy
+    Hy[1:, :] = 0.5 * (Hy[:-1, :] + Hy[1:, :])
+    Hy = np.pad(Hy, ((0,0),(1,1)), 'edge')
+    Hy = 0.5 * (Hy[:, 1:] + Hy[:, :-1])
 
     return Ez, Hy, x, t
 
@@ -133,22 +138,25 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
     Nt = len(t)
 
     Nx, Ny, Nz = eps_rel.shape
-    Ex = np.zeros((Nx-1, Ny, Nz)).astype('complex')
-    Ey = np.zeros((Nx, Ny-1, Nz)).astype('complex')
-    Ez = np.zeros((Nx, Ny, Nz-1)).astype('complex')
-    Hx = np.zeros((Nx, Ny-1, Nz-1)).astype('complex')
-    Hy = np.zeros((Nx-1, Ny, Nz-1)).astype('complex')
-    Hz = np.zeros((Nx-1, Ny-1, Nz)).astype('complex')
+    Ex = np.zeros((Nx-1, Ny, Nz)).astype('complex64')
+    Ey = np.zeros((Nx, Ny-1, Nz)).astype('complex64')
+    Ez = np.zeros((Nx, Ny, Nz-1)).astype('complex64')
+    Hx = np.zeros((Nx, Ny-1, Nz-1)).astype('complex64')
+    Hy = np.zeros((Nx-1, Ny, Nz-1)).astype('complex64')
+    Hz = np.zeros((Nx-1, Ny-1, Nz)).astype('complex64')
 
     epsx_rec = (1/eps_rel[:-1, :, :] + 1/eps_rel[1:, :, :])/2
+    epsx_rec = epsx_rec[0:Nx-1, 1:Ny-1, 1:Nz-1].astype('float32')
     epsy_rec = (1/eps_rel[:, :-1, :] + 1/eps_rel[:, 1:, :])/2
+    epsy_rec = epsy_rec[1:Nx-1, 0:Ny-1, 1:Nz-1].astype('float32')
     epsz_rec = (1/eps_rel[:, :, :-1] + 1/eps_rel[:, :, 1:])/2
+    epsz_rec = epsz_rec[1:Nx-1, 1:Ny-1, 0:Nz-1].astype('float32')
 
-    jx = (jx[:-1, :, :] + jx[1:, :, :])/2
-    jy = (jy[:, :-1, :] + jy[:, 1:, :])/2
-    jz = (jz[:, :, :-1] + jz[:, :, 1:])/2
+    jx = ((jx[:-1, :, :] + jx[1:, :, :])/2).astype('complex64')
+    jy = ((jy[:, :-1, :] + jy[:, 1:, :])/2).astype('complex64')
+    jz = ((jz[:, :, :-1] + jz[:, :, 1:])/2).astype('complex64')
 
-    F = np.zeros((Nt,Nx,Ny)).astype('complex')
+    F = np.zeros((Nt,Nx,Ny)).astype('complex64')
     count = 0
     for n in range(Niter):
         t_source = dt*(n + 1/2) - 3*tau
@@ -156,16 +164,16 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         jy_n = jy * np.exp(-2j * np.pi * freq * t_source) * np.exp(-(t_source/tau)**2)
         jz_n = jz * np.exp(-2j * np.pi * freq * t_source) * np.exp(-(t_source/tau)**2)
 
-        Ex[0:Nx-1, 1:Nx-1, 1:Nz-1] += (dt/(eps0*epsx_rec) *
+        Ex[0:Nx-1, 1:Ny-1, 1:Nz-1] += (dt/(eps0*epsx_rec) *
                                        ((Hz[0:Nx-1, 1:Ny-1, 1:Nz-1] - Hz[0:Nx-1, 0:Ny-2, 1:Nz-1])/dr -
                                         (Hy[0:Nx-1, 1:Ny-1, 1:Nz-1] - Hy[0:Nx-1, 1:Ny-1, 0:Nz-2])/dr -
-                                        jx_n[0:Nx-1, 1:Nx-1, 1:Nz-1]))
+                                        jx_n[0:Nx-1, 1:Ny-1, 1:Nz-1]))
         Ey[1:Nx-1, 0:Ny-1, 1:Nz-1] += (dt/(eps0*epsy_rec) *
                                        (Hx[1:Nx-1, 0:Ny-1, 1:Nz-1] - Hx[1:Nx-1, 0:Ny-1, 0:Nz-2])/dr -
                                        (Hz[1:Nx-1, 0:Ny-1, 1:Nz-1] - Hz[0:Nx-2, 0:Ny-1, 1:Nz-1])/dr -
                                        jy_n[1:Nx-1, 0:Ny-1, 1:Nz-1])
         Ez[1:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/(eps0 * epsz_rec) *
-                                       (Hy[1:Nx-1, 1:Ny-1, 0:Nz-1] - Hy[0:Nx-2, 0:Ny-1, 1:Nz-1])/dr -
+                                       (Hy[1:Nx-1, 1:Ny-1, 0:Nz-1] - Hy[0:Nx-2, 1:Ny-1, 0:Nz-1])/dr -
                                        (Hx[1:Nx-1, 1:Ny-1, 0:Nz-1] - Hx[1:Nx-1, 0:Ny-2, 0:Nz-1])/dr -
                                        jz_n[1:Nx-1, 1:Ny-1, 0:Nz-1])
 
@@ -178,7 +186,7 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
 
         Hx[1:Nx-1, 0:Ny-1, 0:Nz-1] += (dt/mu0 * (Ey[1:Nx-1, 0:Ny-1, 1:Nz] - Ey[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr -
                                        (Ez[1:Nx-1, 1:Ny, 0:Nz-1] - Ez[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr)
-        Hy[0:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/mu0 * (Ez[1:Nz, 1:Ny-1, 0:Nz-1] - Ez[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr -
+        Hy[0:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/mu0 * (Ez[1:Nx, 1:Ny-1, 0:Nz-1] - Ez[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr -
                                        (Ex[0:Nx-1, 1:Ny-1, 1:Nz] - Ex[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr)
         Hz[0:Nx-1, 0:Ny-1, 1:Nz-1] += (dt/mu0 * (Ex[0:Nx-1, 1:Ny, 1:Nz-1] - Ex[0:Nx-1, 0:Ny-1, 1:Nz-1])/dr -
                                        (Ey[1:Nx, 0:Ny-1, 1:Nz-1] - Ey[0:Nx-1, 0:Ny-1, 1:Nz-1])/dr)
@@ -186,7 +194,7 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         if (n+1)%output_step == 0:
             count += 1
             if field_component == 'ex':
-                res = Ex[0:Nx-1, 1:Nx-1, 1:Nz-1]
+                res = Ex[0:Nx-1, 1:Ny-1, 1:Nz-1]
                 res = np.pad(res, ((0,0), (1,1), (1,1)))
                 res = np.pad(res, ((1,1), (0,0), (0,0)), 'edge')
                 res = (res[:-1,...] + res[1:,...]) * 0.5
@@ -264,9 +272,9 @@ class Fdtd1DAnimation(animation.TimedAnimation):
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         vmax = max(np.max(np.abs(Ez)),np.max(np.abs(Hy))*Z0)*1e6
         fig, ax = plt.subplots(2,1, sharex=True, gridspec_kw={'hspace': 0.4})
-        self.line_E, = ax[0].plot(self.E_at_step(0),
+        self.line_E, = ax[0].plot(x*1e6, self.E_at_step(0),
                          color=colors[0], label='$\\Re\\{E_z\\}$')
-        self.line_H, = ax[1].plot(self.H_at_step(0),
+        self.line_H, = ax[1].plot(x*1e6, self.H_at_step(0),
                          color=colors[1], label='$Z_0\\Re\\{H_y\\}$')
         if x_interface is not None:
             for a in ax:
