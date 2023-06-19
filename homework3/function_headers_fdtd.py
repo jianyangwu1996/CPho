@@ -138,23 +138,23 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
     Nt = len(t)
 
     Nx, Ny, Nz = eps_rel.shape
-    Ex = np.zeros((Nx-1, Ny, Nz)).astype('complex64')
-    Ey = np.zeros((Nx, Ny-1, Nz)).astype('complex64')
-    Ez = np.zeros((Nx, Ny, Nz-1)).astype('complex64')
-    Hx = np.zeros((Nx, Ny-1, Nz-1)).astype('complex64')
-    Hy = np.zeros((Nx-1, Ny, Nz-1)).astype('complex64')
-    Hz = np.zeros((Nx-1, Ny-1, Nz)).astype('complex64')
+    Ex = np.zeros((Nx-1, Ny, Nz)).astype('complex')
+    Ey = np.zeros((Nx, Ny-1, Nz)).astype('complex')
+    Ez = np.zeros((Nx, Ny, Nz-1)).astype('complex')
+    Hx = np.zeros((Nx, Ny-1, Nz-1)).astype('complex')
+    Hy = np.zeros((Nx-1, Ny, Nz-1)).astype('complex')
+    Hz = np.zeros((Nx-1, Ny-1, Nz)).astype('complex')
 
     epsx_rec = (1/eps_rel[:-1, :, :] + 1/eps_rel[1:, :, :])/2
-    epsx_rec = epsx_rec[0:Nx-1, 1:Ny-1, 1:Nz-1].astype('float32')
+    epsx_rec = epsx_rec[0:Nx-1, 1:Ny-1, 1:Nz-1]
     epsy_rec = (1/eps_rel[:, :-1, :] + 1/eps_rel[:, 1:, :])/2
-    epsy_rec = epsy_rec[1:Nx-1, 0:Ny-1, 1:Nz-1].astype('float32')
+    epsy_rec = epsy_rec[1:Nx-1, 0:Ny-1, 1:Nz-1]
     epsz_rec = (1/eps_rel[:, :, :-1] + 1/eps_rel[:, :, 1:])/2
-    epsz_rec = epsz_rec[1:Nx-1, 1:Ny-1, 0:Nz-1].astype('float32')
+    epsz_rec = epsz_rec[1:Nx-1, 1:Ny-1, 0:Nz-1]
 
-    jx = ((jx[:-1, :, :] + jx[1:, :, :])/2).astype('complex64')
-    jy = ((jy[:, :-1, :] + jy[:, 1:, :])/2).astype('complex64')
-    jz = ((jz[:, :, :-1] + jz[:, :, 1:])/2).astype('complex64')
+    jx = ((jx[:-1, :, :] + jx[1:, :, :])/2)
+    jy = ((jy[:, :-1, :] + jy[:, 1:, :])/2)
+    jz = ((jz[:, :, :-1] + jz[:, :, 1:])/2)
 
     F = np.zeros((Nt,Nx,Ny)).astype('complex64')
     count = 0
@@ -164,18 +164,18 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         jy_n = jy * np.exp(-2j * np.pi * freq * t_source) * np.exp(-(t_source/tau)**2)
         jz_n = jz * np.exp(-2j * np.pi * freq * t_source) * np.exp(-(t_source/tau)**2)
 
-        Ex[0:Nx-1, 1:Ny-1, 1:Nz-1] += (dt/(eps0*epsx_rec) *
+        Ex[0:Nx-1, 1:Ny-1, 1:Nz-1] += (dt/eps0*epsx_rec *
                                        ((Hz[0:Nx-1, 1:Ny-1, 1:Nz-1] - Hz[0:Nx-1, 0:Ny-2, 1:Nz-1])/dr -
                                         (Hy[0:Nx-1, 1:Ny-1, 1:Nz-1] - Hy[0:Nx-1, 1:Ny-1, 0:Nz-2])/dr -
                                         jx_n[0:Nx-1, 1:Ny-1, 1:Nz-1]))
-        Ey[1:Nx-1, 0:Ny-1, 1:Nz-1] += (dt/(eps0*epsy_rec) *
-                                       (Hx[1:Nx-1, 0:Ny-1, 1:Nz-1] - Hx[1:Nx-1, 0:Ny-1, 0:Nz-2])/dr -
+        Ey[1:Nx-1, 0:Ny-1, 1:Nz-1] += (dt/eps0*epsy_rec *
+                                       ((Hx[1:Nx-1, 0:Ny-1, 1:Nz-1] - Hx[1:Nx-1, 0:Ny-1, 0:Nz-2])/dr -
                                        (Hz[1:Nx-1, 0:Ny-1, 1:Nz-1] - Hz[0:Nx-2, 0:Ny-1, 1:Nz-1])/dr -
-                                       jy_n[1:Nx-1, 0:Ny-1, 1:Nz-1])
-        Ez[1:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/(eps0 * epsz_rec) *
-                                       (Hy[1:Nx-1, 1:Ny-1, 0:Nz-1] - Hy[0:Nx-2, 1:Ny-1, 0:Nz-1])/dr -
+                                       jy_n[1:Nx-1, 0:Ny-1, 1:Nz-1]))
+        Ez[1:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/eps0*epsz_rec *
+                                       ((Hy[1:Nx-1, 1:Ny-1, 0:Nz-1] - Hy[0:Nx-2, 1:Ny-1, 0:Nz-1])/dr -
                                        (Hx[1:Nx-1, 1:Ny-1, 0:Nz-1] - Hx[1:Nx-1, 0:Ny-2, 0:Nz-1])/dr -
-                                       jz_n[1:Nx-1, 1:Ny-1, 0:Nz-1])
+                                       jz_n[1:Nx-1, 1:Ny-1, 0:Nz-1]))
 
         if field_component == 'hx':
             temp = Hx[1:Nx-1, 0:Ny-1, 0:Nz-1]
@@ -184,12 +184,12 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         elif field_component == 'hz':
             temp = Hz[0:Nx-1, 0:Ny-1, 1:Nz-1]
 
-        Hx[1:Nx-1, 0:Ny-1, 0:Nz-1] += (dt/mu0 * (Ey[1:Nx-1, 0:Ny-1, 1:Nz] - Ey[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr -
-                                       (Ez[1:Nx-1, 1:Ny, 0:Nz-1] - Ez[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr)
-        Hy[0:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/mu0 * (Ez[1:Nx, 1:Ny-1, 0:Nz-1] - Ez[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr -
-                                       (Ex[0:Nx-1, 1:Ny-1, 1:Nz] - Ex[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr)
-        Hz[0:Nx-1, 0:Ny-1, 1:Nz-1] += (dt/mu0 * (Ex[0:Nx-1, 1:Ny, 1:Nz-1] - Ex[0:Nx-1, 0:Ny-1, 1:Nz-1])/dr -
-                                       (Ey[1:Nx, 0:Ny-1, 1:Nz-1] - Ey[0:Nx-1, 0:Ny-1, 1:Nz-1])/dr)
+        Hx[1:Nx-1, 0:Ny-1, 0:Nz-1] += (dt/mu0 * ((Ey[1:Nx-1, 0:Ny-1, 1:Nz] - Ey[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr -
+                                       (Ez[1:Nx-1, 1:Ny, 0:Nz-1] - Ez[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr))
+        Hy[0:Nx-1, 1:Ny-1, 0:Nz-1] += (dt/mu0 * ((Ez[1:Nx, 1:Ny-1, 0:Nz-1] - Ez[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr -
+                                       (Ex[0:Nx-1, 1:Ny-1, 1:Nz] - Ex[0:Nx-1, 1:Ny-1, 0:Nz-1])/dr))
+        Hz[0:Nx-1, 0:Ny-1, 1:Nz-1] += ((dt/mu0 * (Ex[0:Nx-1, 1:Ny, 1:Nz-1] - Ex[0:Nx-1, 0:Ny-1, 1:Nz-1])/dr -
+                                       (Ey[1:Nx, 0:Ny-1, 1:Nz-1] - Ey[0:Nx-1, 0:Ny-1, 1:Nz-1])/dr))
 
         if (n+1)%output_step == 0:
             count += 1
