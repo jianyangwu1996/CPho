@@ -36,7 +36,7 @@ x_interface = x_span/4 #postion of dielectric interface
 
 # simulation parameters
 dx = 15e-9 # grid spacing [m]
-time_span = 60e-15 # duration of simulation [s]
+time_span = 240e-15 # duration of simulation [s]
 
 Nx = int(round(x_span/dx)) + 1 # number of grid points
 
@@ -48,8 +48,8 @@ source_pulse_length = 1e-15 # [s]
 # %% create permittivity distribution and run simulation %%%%%%%%%%%%%%%%%%%%%%
 eps=np.ones((Nx,))
 x = np.linspace(-(Nx-1)*dx/2, (Nx-1)*dx/2, Nx)
-indices = x >= x_span/4
-eps[indices] = 4
+# indices = x >= x_span/4
+# eps[indices] = 4
 
 # please add your code here
 Ez, Hy, x, t = fdtd_1d(eps, dx, time_span, source_frequency, source_position, source_pulse_length)
@@ -60,7 +60,7 @@ step = t[-1]/fps/30
 ani = Fdtd1DAnimation(x, t, Ez, Hy, x_interface=x_interface,
                        step=step, fps=fps)
 plt.show()
-ani.save("./animation/1Dresult_diff.gif")
+ani.save("./animation/1Dresult.gif")
 
 # %% create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
