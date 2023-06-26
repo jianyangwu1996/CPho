@@ -89,7 +89,7 @@ ani = Fdtd3DAnimation(x, y, t, F, titlestr, cb_label, rel_color_range, fps)
 plt.show()
 ani.save("./animation/3Dresult_hx.gif")
 
-#%% movie of Hx %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%% movie of Hy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Hy, t = fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz, field_component='hy',
                 z_ind=z_ind, output_step=output_step)
 F = Hy*Z0*1e6

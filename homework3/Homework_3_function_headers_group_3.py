@@ -96,7 +96,7 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
 
 
 def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
-            field_component, z_ind, output_step):
+            field_component, z_ind, output_step, dt=None):
     '''Computes the temporal evolution of a pulsed spatially extended current
     source using the 3D FDTD method. Returns z-slices of the selected
     field at the given z-position every output_step time steps. The pulse
@@ -145,9 +145,12 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
     else:
         pass
 
-    dt = dr / (2*c)
-    Niter = int(time_span//dt)
-    t = np.arange(0, time_span, dt*output_step)
+    if dt is None:
+        dt = dr / (2*c)
+    else:
+        pass
+    Niter = int(round(time_span / dt))
+    t = np.linspace(0, time_span, Niter // output_step + 1)
     Nt = len(t)
 
     Nx, Ny, Nz = eps_rel.shape
@@ -243,7 +246,6 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
             F[count, ...] = res[..., z_ind]
 
     return F, t
-    pass
 
 
 class Fdtd1DAnimation(animation.TimedAnimation):
