@@ -191,11 +191,11 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
                                        jz_n[1:Nx-1, 1:Ny-1, 0:Nz-1]))
 
         if field_component == 'hx':
-            temp = Hx[1:Nx-1, 0:Ny-1, 0:Nz-1]
+            temp = Hx[:, 0:Ny-1, 0:Nz-1]
         elif field_component == 'hy':
-            temp = Hy[0:Nx-1, 1:Ny-1, 0:Nz-1]
+            temp = Hy[0:Nx-1, :, 0:Nz-1]
         elif field_component == 'hz':
-            temp = Hz[0:Nx-1, 0:Ny-1, 1:Nz-1]
+            temp = Hz[0:Nx-1, 0:Ny-1, :]
 
         Hx[1:Nx-1, 0:Ny-1, 0:Nz-1] += (dt/mu0 * ((Ey[1:Nx-1, 0:Ny-1, 1:Nz] - Ey[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr -
                                        (Ez[1:Nx-1, 1:Ny, 0:Nz-1] - Ez[1:Nx-1, 0:Ny-1, 0:Nz-1])/dr))
