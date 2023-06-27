@@ -261,5 +261,5 @@ cm_data = [[0.65451717,0.83663233,0.93192758],
            [0.97131142,0.76110161,0.50723372]]
 
 cm = ListedColormap(cm_data, name="bluered_dark")
-matplotlib.cm.register_cmap(name='bluered_dark', cmap=cm)
+matplotlib.colormaps.register(cm, name='bluered_dark')
 

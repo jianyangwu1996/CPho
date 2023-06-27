@@ -3,7 +3,7 @@
 
 
 import numpy as np
-from function_headers_fdtd import fdtd_3d, Fdtd3DAnimation
+from Homework_3_function_headers_group_3 import fdtd_3d, Fdtd3DAnimation
 from matplotlib import pyplot as plt
 
 # dark bluered colormap, registers automatically with matplotlib on import

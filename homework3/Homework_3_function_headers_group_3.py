@@ -92,9 +92,6 @@ def fdtd_1d(eps_rel, dx, time_span, source_frequency, source_position,
     return Ez, Hy, x, t
 
 
-    pass
-
-
 def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
             field_component, z_ind, output_step, dt=None):
     '''Computes the temporal evolution of a pulsed spatially extended current
@@ -210,35 +207,29 @@ def fdtd_3d(eps_rel, dr, time_span, freq, tau, jx, jy, jz,
         if (n+1)%output_step == 0:
             count += 1
             if field_component == 'ex':
-                res = Ex[0:Nx-1, 1:Ny-1, 1:Nz-1]
-                res = np.pad(res, ((0,0), (1,1), (1,1)))
+                res = Ex[0:Nx-1, :, :]
                 res = np.pad(res, ((1,1), (0,0), (0,0)), 'edge')
                 res = (res[:-1,...] + res[1:,...]) * 0.5
             elif field_component == 'ey':
-                res = Ey[1:Nx-1, 0:Ny-1, 1:Nz-1]
-                res = np.pad(res, ((1, 1), (0, 0), (1, 1)))
+                res = Ey[:, 0:Ny-1, :]
                 res = np.pad(res, ((0, 0), (1, 1), (0, 0)), 'edge')
                 res = (res[:, :-1, :] + res[:, 1:, :]) * 0.5
             elif field_component == 'ez':
-                res = Ez[1:Nx-1, 1:Ny-1, 0:Nz-1]
-                res = np.pad(res, ((1, 1), (1, 1), (0, 0)))
+                res = Ez[:, :, 0:Nz-1]
                 res = np.pad(res, ((0, 0), (0, 0), (1, 1)), 'edge')
                 res = (res[..., :-1] + res[..., 1:]) * 0.5
             elif field_component == 'hx':
-                res = (Hx[1:Nx-1, 0:Ny-1, 0:Nz-1] + temp) * 0.5
-                res = np.pad(res, ((1, 1), (0, 0), (0, 0)))
+                res = (Hx[:, 0:Ny-1, 0:Nz-1] + temp) * 0.5
                 res = np.pad(res, ((0, 0), (1, 1), (1, 1)), 'edge')
                 res = (res[:, :-1, :] + res[:, 1:, :]) * 0.5
                 res = (res[..., :-1] + res[..., 1:]) * 0.5
             elif field_component == 'hy':
-                res = (Hy[0:Nx-1, 1:Ny-1, 0:Nz-1] + temp) * 0.5
-                res = np.pad(res, ((0, 0), (1, 1), (0, 0)))
+                res = (Hy[0:Nx-1, :, 0:Nz-1] + temp) * 0.5
                 res = np.pad(res, ((1, 1), (0, 0), (1, 1)), 'edge')
                 res = (res[:-1, ...] + res[1:, ...]) * 0.5
                 res = (res[..., :-1] + res[..., 1:]) * 0.5
             elif field_component == 'hz':
-                res = (Hz[0:Nx-1, 0:Ny-1, 1:Nz-1] + temp) * 0.5
-                res = np.pad(res, ((0, 0), (0, 0), (1, 1)))
+                res = (Hz[0:Nx-1, 0:Ny-1, :] + temp) * 0.5
                 res = np.pad(res, ((1, 1), (1, 1), (0, 0)), 'edge')
                 res = (res[:-1, ...] + res[1:, ...]) * 0.5
                 res = (res[:, :-1, :] + res[:, 1:, :]) * 0.5
